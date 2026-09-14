@@ -1,33 +1,240 @@
 # WikiScraper & Language Analyzer
 
-A Python command-line application for scraping data from wiki articles and performing statistical analysis based on word frequency.
+A Python command-line application for scraping wiki articles, processing their content, and analyzing word-frequency data.
 
-> Final project for **Kurs Pythona** (Python Course), winter semester 2025/26, University of Warsaw.
+---
 
 ## What is WikiScraper?
 
-WikiScraper is a command-line tool that retrieves and analyzes data from wiki articles.
+WikiScraper is a single command-line web scraping, text processing, statistical analysis, and data visualization application.
 
-The application combines web scraping with text analysis. It can extract article summaries, parse HTML tables, count word occurrences, recursively crawl related articles, and compare the vocabulary of scraped content with general language corpora.
+The scraper can retrieve article summaries, extract HTML tables, count word occurrences, and recursively crawl related wiki articles. The collected word-frequency data can then be analyzed and compared with frequencies from general language corpora.
 
-The project was designed as a final assignment for the Python course and focuses on practical use of Python libraries for HTTP requests, HTML parsing, data processing, statistical analysis, and visualization.
+The project follows the pipeline:
 
-## Features
+```text
+Wiki article
+     │
+     ▼
+HTTP request
+     │
+     ▼
+HTML parsing
+     │
+     ├───────────────┐
+     ▼               ▼
+Summary          HTML tables
+     │               │
+     ▼               ▼
+Word extraction   Pandas / CSV
+     │
+     ▼
+Word-frequency data
+     │
+     ▼
+Statistical analysis
+     │
+     ├───────────────┐
+     ▼               ▼
+Wiki frequency   Language corpus
+     │               │
+     └───────┬───────┘
+             ▼
+       Comparison / charts
+```
+
+---
+
+## Key Features
+
+### Article scraping
 
 - Fetching introductory paragraphs from wiki articles
-- Extracting selected HTML tables and saving them as CSV files
+- Removing HTML markup from extracted summaries
+- Extracting selected HTML tables
+- Saving extracted tables as CSV files
+
+### Word-frequency analysis
+
 - Counting word occurrences across articles
 - Storing accumulated word-frequency data in JSON format
-- Recursive crawling of internal wiki links
-- Configurable crawling depth and delay between requests
-- Relative word-frequency analysis
-- Comparing article vocabulary with general language frequency data
+- Calculating relative word frequencies
+- Comparing scraped vocabulary with general language frequency data
+- Ranking words according to different frequency sources
 - Generating frequency charts
-- Unit tests without network requests
-- End-to-end integration testing
-- Jupyter Notebook analysis of the language detection approach
 
-## Technologies
+### Recursive crawling
+
+- Following internal wiki links automatically
+- Configurable crawling depth
+- Configurable delay between requests
+
+The crawling process can be visualized as:
+
+```text
+Starting article
+      │
+      ├── linked article
+      │      ├── linked article
+      │      └── linked article
+      │
+      └── linked article
+             └── linked article
+```
+
+The depth parameter determines how many levels of links are followed from the starting article.
+
+---
+
+## Scraping
+
+The main scraper is implemented in `wiki_scraper.py` and provides several command-line operations.
+
+### Article Summary
+
+Retrieve the introductory paragraph of an article:
+
+```bash
+python wiki_scraper.py --summary "Python"
+```
+
+### HTML Tables
+
+Extract a selected table from an article:
+
+```bash
+python wiki_scraper.py --table "Python" --number 1
+```
+
+The command also supports treating the first row of the table as a header.
+
+The extracted HTML table is parsed and converted into a `pandas` DataFrame before being saved as CSV.
+
+### Word Counting
+
+Count word occurrences in an article:
+
+```bash
+python wiki_scraper.py --count-words "Python"
+```
+
+The collected data can be accumulated in a JSON file and used for further analysis.
+
+---
+
+## Recursive Crawling
+
+WikiScraper can automatically follow internal links and collect word-frequency data from multiple related articles.
+
+```bash
+python wiki_scraper.py --auto-count-words "Python" --depth 2 --wait 1
+```
+
+Two parameters control the crawling process:
+
+- `--depth` — maximum number of link levels to follow
+- `--wait` — delay between requests
+
+The configurable delay allows requests to be spaced out instead of being sent continuously to the target website.
+
+---
+
+## Relative Word Frequency
+
+The project includes an analysis comparing word frequencies in scraped wiki content with frequencies from a general language corpus.
+
+```bash
+python wiki_scraper.py --analyze-relative-word-frequency \
+    --mode article \
+    --count 20
+```
+
+Two analysis modes are available:
+
+- `article` — ranks words according to their frequency in the scraped wiki content
+- `language` — ranks words according to their frequency in the reference language corpus
+
+The results can also be visualized as a chart:
+
+```bash
+python wiki_scraper.py --analyze-relative-word-frequency \
+    --mode article \
+    --chart "output.png"
+```
+
+The analysis functionality is implemented separately in `analyzer.py`.
+
+---
+
+## Analysis Notebook
+
+The repository contains `analysis.ipynb`, a Jupyter Notebook used for a more detailed investigation of the language analysis performed by the project.
+
+The notebook explores the language detection approach and visualizes the resulting data.
+
+---
+
+## Testing
+
+The project contains both unit and integration tests.
+
+### Unit Tests
+
+Unit tests verify individual components of the scraper without making network requests.
+
+The tests cover functionality such as:
+
+- article URL generation,
+- article summary extraction,
+- internal link extraction,
+- HTML table processing.
+
+Run the tests with:
+
+```bash
+python tests.py
+```
+
+### Integration Test
+
+The integration test verifies the scraper workflow using a local HTML fixture rather than an external website.
+
+This allows the scraping process to be tested without depending on a live wiki.
+
+Run it with:
+
+```bash
+python integration_test.py
+```
+
+---
+
+## Project Structure
+
+```text
+.
+├── analysis.ipynb          # Jupyter Notebook with language analysis
+├── analyzer.py             # Word-frequency analysis
+├── integration_test.py     # Integration test using local HTML data
+├── requirements.txt        # Python dependencies
+├── tests.py                # Unit tests
+├── wiki_scraper.py         # Main scraper and command-line interface
+└── README.md
+```
+
+### Implementation
+
+| File | Responsibility |
+|---|---|
+| `wiki_scraper.py` | Command-line interface, HTTP requests, HTML parsing, article processing, and recursive crawling |
+| `analyzer.py` | Word-frequency analysis and comparison with language corpora |
+| `tests.py` | Unit tests for individual scraper components |
+| `integration_test.py` | Integration testing using local HTML data |
+| `analysis.ipynb` | Exploratory analysis and visualization |
+
+---
+
+## Technologies Used
 
 ### Language and Libraries
 
@@ -52,143 +259,31 @@ The project was designed as a final assignment for the Python course and focuses
 - Python unit tests
 - Integration testing with local HTML fixtures
 
-## Scraping
+---
 
-The scraper can retrieve different types of information from a selected wiki article.
+## Running Locally
 
-### Article Summary
-
-The `--summary` command retrieves the introductory paragraph of an article and removes HTML markup.
+### 1. Clone the repository
 
 ```bash
-python wiki_scraper.py --summary "phrase"
+git clone https://github.com/hanna-kaliszuk/Wikiscraper.git
+cd Wikiscraper
 ```
 
-### HTML Tables
-
-A selected table can be extracted from an article and saved as a CSV file.
-
-The user can specify:
-
-- which table to extract,
-- whether the first row should be treated as a header.
-
-```bash
-python wiki_scraper.py --table "phrase" --number n [--first-row-is-header]
-```
-
-Tables are parsed from the article HTML and processed using `pandas`.
-
-## Word Frequency Analysis
-
-The application can count word occurrences in wiki articles and maintain the results in a JSON file.
-
-```bash
-python wiki_scraper.py --count-words "phrase"
-```
-
-The collected data can be used for further statistical analysis of the vocabulary appearing in the scraped articles.
-
-## Recursive Crawling
-
-WikiScraper also supports automatically following internal links and processing multiple related articles.
-
-```bash
-python wiki_scraper.py --auto-count-words "phrase" --depth n --wait t
-```
-
-The crawler allows the maximum depth and delay between requests to be configured.
-
-The delay is intentionally configurable to avoid sending requests too frequently to the target website.
-
-```text
-Starting article
-      │
-      ├── linked article
-      │      ├── linked article
-      │      └── linked article
-      │
-      └── linked article
-             └── linked article
-```
-
-The depth parameter determines how many levels of links are followed from the starting article.
-
-## Relative Word Frequency
-
-The project includes an analysis comparing word frequencies in scraped articles with frequencies from general language corpora.
-
-```bash
-python wiki_scraper.py --analyze-relative-word-frequency \
-    --mode "mode" \
-    [--chart "file/path.png"]
-```
-
-Two analysis modes are available:
-
-- `article` — ranks words according to their frequency in the scraped wiki content
-- `language` — ranks words according to their frequency in the reference language corpus
-
-The number of displayed words can also be configured.
-
-The resulting data can optionally be visualized as a chart.
-
-## Analysis Notebook
-
-The repository contains `analysis.ipynb`, a Jupyter Notebook presenting a more detailed investigation of the language analysis performed by the project.
-
-The notebook is used to explore the effectiveness of the language detection method and visualize the resulting data.
-
-## Testing
-
-The project contains both unit and integration tests.
-
-### Unit Tests
-
-Unit tests verify individual components of the scraper without making network requests.
-
-Run them with:
-
-```bash
-python tests.py
-```
-
-### Integration Test
-
-The integration test verifies the scraper as a complete system using a local dummy HTML file.
-
-This allows the main scraping workflow to be tested without depending on an external wiki website.
-
-Run it with:
-
-```bash
-python integration_test.py
-```
-
-## Installation
-
-The project requires Python and the libraries listed in `requirements.txt`.
-
-Create and activate a virtual environment:
+### 2. Create a virtual environment
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-Install the dependencies:
+### 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Alternatively, the dependencies can be installed directly with:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Running
+### 4. Run the application
 
 The main program is executed from the command line:
 
@@ -202,84 +297,21 @@ For example:
 python wiki_scraper.py --summary "Python"
 ```
 
-or:
+---
 
-```bash
-python wiki_scraper.py --count-words "Python"
-```
+## Context
 
-## Project Structure
+This project was developed as a final assignment for the **Kurs Pythona** (Python Course) at the **University of Warsaw** during the Winter Semester 2025/26.
 
-```text
-.
-├── analysis.ipynb          # Jupyter Notebook with language analysis
-├── analyzer.py             # Word-frequency analysis
-├── integration_test.py     # End-to-end tests
-├── requirements.txt        # Python dependencies
-├── tests.py                # Unit tests
-├── wiki_scraper.py         # Main scraper and CLI
-└── README.md
-```
+The project focuses on practical use of Python for:
 
-### Implementation
-
-- `wiki_scraper.py` — command-line interface, HTTP requests, HTML parsing, article processing, and recursive crawling
-- `analyzer.py` — word-frequency analysis and comparison with language corpora
-- `tests.py` — unit tests for individual components
-- `integration_test.py` — end-to-end testing using local HTML data
-- `analysis.ipynb` — exploratory analysis and visualization
-
-## Useful Commands
-
-### Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### Fetch an article summary
-
-```bash
-python wiki_scraper.py --summary "Python"
-```
-
-### Extract a table
-
-```bash
-python wiki_scraper.py --table "Python" --number 1
-```
-
-### Count words
-
-```bash
-python wiki_scraper.py --count-words "Python"
-```
-
-### Crawl related articles
-
-```bash
-python wiki_scraper.py --auto-count-words "Python" --depth 2 --wait 1
-```
-
-### Analyze relative word frequency
-
-```bash
-python wiki_scraper.py --analyze-relative-word-frequency \
-    --mode article \
-    --count 20
-```
-
-### Run unit tests
-
-```bash
-python tests.py
-```
-
-### Run integration tests
-
-```bash
-python integration_test.py
-```
+- HTTP communication,
+- HTML parsing,
+- data processing,
+- statistical analysis,
+- data visualization,
+- automated testing.
+---
 
 ## Notes
 
@@ -287,7 +319,6 @@ python integration_test.py
 - Scraped word-frequency data is stored separately from the source code.
 - Recursive crawling should use a reasonable delay between requests.
 - Integration tests use local HTML data rather than relying on an external website.
-- The project includes both automated tests and exploratory data analysis.
 - Data scraped from Bulbapedia is subject to the source website's licensing terms.
 
 ## License
@@ -295,7 +326,3 @@ python integration_test.py
 The project code is distributed under the **MIT License**.
 
 Data originating from Bulbapedia is subject to the **CC BY-NC-SA 2.5** license.
-
-## Course
-
-This project was developed as a final assignment for the **Kurs Pythona** (Python Course) at the University of Warsaw during the Winter Semester 2025/26.
